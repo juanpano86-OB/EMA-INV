@@ -399,649 +399,159 @@ select.form-control{cursor:pointer}
           <div class="form-group"><label class="form-label">Modelo</label><input type="text" class="form-control" id="fModelo"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">Serie</label><input type="text" class="form-control" id="fSerie"></div>
-          <div class="form-group"><label class="form-label">Año</label><input type="text" class="form-control" id="fAnio"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Costo ($)</label><input type="number" class="form-control" id="fCosto" step="0.01"></div>
-          <div class="form-group"><label class="form-label">Estado Físico</label><select class="form-control" id="fEstado"><option value="">— Sin estado —</option><option value="1">BUENO</option><option value="2">REGULAR</option><option value="3">MALO</option></select></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Motor</label><input type="text" class="form-control" id="fMotor"></div>
-          <div class="form-group"><label class="form-label">Chasis</label><input type="text" class="form-control" id="fChasis"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Placa</label><input type="text" class="form-control" id="fPlaca"></div>
-          <div class="form-group"><label class="form-label">Afectación</label><input type="text" class="form-control" id="fAfectacion"></div>
-        </div>
-        <div class="form-group"><label class="form-label">Observación</label><textarea class="form-control" id="fObs" rows="2" style="resize:none"></textarea></div>
-      </div>
-      <div class="form-section">
-        <div class="form-section-title">Ubicación</div>
-        <div class="form-group"><label class="form-label">Sede</label><select class="form-control" id="fSede"></select></div>
-        <div class="form-group"><label class="form-label">Descripción de ubicación</label><input type="text" class="form-control" id="fUbic"></div>
-        <div class="form-group">
-          <button class="loc-btn" onclick="getLocation()">📍 Capturar coordenadas GPS</button>
-          <div class="loc-text" id="locText">Sin coordenadas</div>
+          <div class="form-group"><label class="form-label">Serie</label><input type="text" class="form-control" id="fSerie" style="font-family:var(--mono)"></div>
+          <div class="form-group"><label class="form-label">Sede / Ubicación</label><input type="text" class="form-control" id="fSede"></div>
         </div>
       </div>
       <div class="form-section">
-        <div class="form-section-title">Fotografías (máx. 3)</div>
-        <div class="photo-grid" id="photoGrid"></div>
-        <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
-      </div>
-      <div class="form-section">
-        <div class="form-section-title">Fechas</div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Fecha Compra</label><input type="date" class="form-control" id="fFechaC"></div>
-          <div class="form-group"><label class="form-label">Fecha Inventario</label><input type="date" class="form-control" id="fFechaI"></div>
+        <div class="form-section-title">Evidencia Fotográfica y GPS</div>
+        <div class="photo-grid">
+          <div class="photo-slot" onclick="triggerPhoto(0)"><span class="add-icon">📷</span></div>
+          <div class="photo-slot" onclick="triggerPhoto(1)"><span class="add-icon">📷</span></div>
+          <div class="photo-slot" onclick="triggerPhoto(2)"><span class="add-icon">📷</span></div>
+        </div>
+        <div style="margin-top:14px">
+          <button class="loc-btn" onclick="captureGPS()">📍 Capturar Coordenadas GPS</button>
+          <div class="loc-text" id="gpsDisplay">Sin coordenadas</div>
         </div>
       </div>
     </div>
     <div class="form-footer">
       <button class="btn-secondary" onclick="closeForm()">Cancelar</button>
-      <button class="btn-danger" id="btnDel" onclick="deleteAsset()" style="display:none">🗑️</button>
-      <button class="btn-primary" id="btnSave" onclick="saveAsset()">💾 Guardar</button>
+      <button class="btn-primary" id="btnSave" onclick="saveAsset()">Guardar Cambios</button>
     </div>
   </div>
 </div>
 
-<!-- SCANNER -->
-<div class="scanner-overlay" id="scannerOverlay">
-  <div class="scanner-header">
-    <button class="close-btn" style="color:#fff;background:rgba(255,255,255,.1)" onclick="closeScanner()">✕</button>
-    <h3>Escanear Código</h3>
-  </div>
-  <div style="position:relative;flex:1;overflow:hidden">
-    <video id="scanner-video" autoplay playsinline muted></video>
-    <div class="scanner-frame"></div>
-  </div>
-  <p class="scanner-hint">Apunta al código QR o de barras del activo</p>
-  <div class="manual-input-wrap">
-    <input type="text" class="manual-input" id="manualCode" placeholder="O escribe el código manualmente...">
-    <button class="manual-search-btn" onclick="searchCode()">Buscar</button>
-  </div>
-</div>
-
-<!-- LIGHTBOX -->
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-  <img id="lbImg" src="">
-  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
-</div>
-
-<!-- TOAST -->
+<!-- TOAST NOTIFICACIONES -->
 <div class="toast" id="toast"></div>
 
-<!-- FIREBASE SDK -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, writeBatch, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+<!-- LIBRERÍAS DE FIREBASE (Módulos de compatibilidad v9) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-// ── Firebase config ──────────────────────────────────────────
+<script>
+// --- CONFIGURACIÓN DE FIREBASE ---
 const firebaseConfig = {
-  apiKey: "AIzaSyBdZQgfcQH1XvMxomQMLQWMA4LNloGezx8",
-  authDomain: "emapag-etiquetas.firebaseapp.com",
-  projectId: "emapag-etiquetas",
-  storageBucket: "emapag-etiquetas.firebasestorage.app",
-  messagingSenderId: "704717908882",
-  appId: "1:704717908882:web:76a50e8a953b575d376f4b",
-  measurementId: "G-H21PLGFY1V"
+  apiKey: "TU_API_KEY_AQUÍ",
+  authDomain: "TU_AUTH_DOMAIN.firebaseapp.com",
+  projectId: "TU_PROJECT_ID",
+  storageBucket: "TU_STORAGE_BUCKET.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId: "TU_APP_ID"
 };
 
-// Inicializar Firebase
-const app = firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const fbApp = initializeApp(firebaseConfig);
-const db = getFirestore(fbApp);
-const storage = getStorage(fbApp);
-
-// ── Constants ────────────────────────────────────────────────
-const SEDES = [{"id":1,"name":"BELLAVISTA - GEOFONIA ANC"},{"id":2,"name":"BELLAVISTA - TERRITORIO Y CONTROL ANC"},{"id":3,"name":"BOCATOMA MONTE SINAI"},{"id":4,"name":"E/B 1 AAPP 14.5 VIA LA COSTA"},{"id":5,"name":"E/B AAPP 9 DE ENERO"},{"id":6,"name":"E/B AAPP BIM BAM BUM"},{"id":7,"name":"E/B AAPP BIM BAM BUM MEDIO"},{"id":8,"name":"E/B AAPP BOOSTER LOS CEIBOS"},{"id":9,"name":"E/B AAPP EL CARMEN"},{"id":10,"name":"E/B AAPP JUAN MONTALVO"},{"id":11,"name":"E/B AAPP LOS PARQUES"},{"id":12,"name":"E/B AAPP LOS SENDEROS"},{"id":13,"name":"E/B AAPP MAPASINGUE ALTO"},{"id":14,"name":"E/B AAPP MAPASINGUE BAJO"},{"id":15,"name":"E/B AAPP MARÍA EUGENIA C."},{"id":16,"name":"E/B AAPP PARAISO"},{"id":17,"name":"E/B AAPP PASTOR VERA"},{"id":18,"name":"E/B AAPP SAN EDUARDO BAJO"},{"id":19,"name":"E/B AAPP TRES CERRITOS"},{"id":20,"name":"E/B AAPP TRINITARIA"},{"id":21,"name":"E/B AAPP VOLUNTAD DE DIOS"},{"id":22,"name":"E/B SANTA ANA - OPER Y MANT. E/B. AAPP"},{"id":23,"name":"E/B SANTA ANA - PLANIFICACION MANT. E/B"},{"id":24,"name":"ESTACIÓN DE PUNÁ - ATENCIÓN AL CLIENTE"},{"id":25,"name":"ESTACION DE TENGUEL - PLANTA AAPP"},{"id":26,"name":"PARQUE COLON CORP. 4 - PISO 1"},{"id":27,"name":"PARQUE COLON CORP. 4 - PISO 3"},{"id":28,"name":"PARQUE COLON CORP. 4 - PLANTA BAJA"},{"id":29,"name":"PLANTA BOMBEO LA TOMA - BODEGA 02"},{"id":30,"name":"PLANTA BOMBEO LA TOMA - EB 1"},{"id":31,"name":"PLANTA BOMBEO LA TOMA - EB 2"},{"id":32,"name":"PLANTA BOMBEO LA TOMA - EB 3"},{"id":33,"name":"PLANTA BOMBEO LA TOMA - EB 4"},{"id":36,"name":"PLANTA LA PRADERA - BODEGAS"},{"id":37,"name":"PLANTA LA PRADERA - INFORMATICA"},{"id":39,"name":"PLANTA LA PRADERA - LAB. MEDIDORES"},{"id":43,"name":"PLANTA LA PRADERA - TALLERES"},{"id":47,"name":"PLANTA TRATAMIENTO LA TOMA - CASA QUIMICA PISO 1"},{"id":48,"name":"PLANTA TRATAMIENTO LA TOMA - CASA QUIMICA PISO 2"},{"id":51,"name":"PLANTA TRATAMIENTO LA TOMA - GERENCIA PRODUCCIÓN"},{"id":52,"name":"PLANTA TRATAMIENTO LA TOMA - LAB. CALIDAD"},{"id":106,"name":"PLANTA TRATAMIENTO LA TOMA - PLANTA CONVENCIONAL"},{"id":107,"name":"PLANTA TRATAMIENTO LA TOMA - PLANTA LURGI"},{"id":145,"name":"PTAR AASS LAGUNAS MUCHO LOTE"},{"id":152,"name":"SAN EDUARDO - MANT. E INSPECCIONES"},{"id":154,"name":"SAMANES 7"},{"id":156,"name":"SAUCES 9"},{"id":157,"name":"AGENCIA CENTRO - ATENCION AL CLIENTE"},{"id":158,"name":"AGENCIA POSORJA - ATENCION AL CLIENTE"},{"id":186,"name":"ECOCITY"},{"id":187,"name":"ESTACIÓN SAN JUAN"},{"id":188,"name":"ESTACIÓN SAN LORENZO"},{"id":219,"name":"POSORJA OPERACIONES"},{"id":220,"name":"PTAR AASS LAS ESCLUSAS"},{"id":221,"name":"RECLORINADORA PARROQUIA PROGRESO"},{"id":222,"name":"RESERVORIO AAPP SAN LORENZO"},{"id":227,"name":"CIUDAD SANTIAGO"},{"id":228,"name":"CIUDAD VICTORIA"},{"id":229,"name":"INMACONSA RESIDENCIAL AASS"}];
-const TIPOS = ["AA.PP INFRAESTRUCTURAS","AA.SS INFRAESTRUCTURAS","BIENES ARTISTICOS Y CULTURALES","EDIFICIOS","EMBARCACIONES Y EQ CAMINEROS","EQUIPOS, SISTEMAS Y PAQUETES","HERRAMIENTAS","MAQUINARIA","MOBILIARIO","PARTES Y REPUESTOS","RADIOS Y EXTINTORES","TERRENO","TUBERIA E INSTALACIONES DE REDES","VEHICULO"];
-const CLASES = ["AAPP","AALL","AASS","ABRAZADERA","BOCA TOMA","CABLES","CAJA","CAMARA DE VALVULA","COLECTOR","CONSTRUCCION","EDIFICIO","ESTACION DE BOMBEO","EXPANSION DE REDES DE AGUA POTABLE","HERRAMIENTA","INDICADOR REGISTRADOR","INSTALACIONES DE GUIAS DOMICILIARIAS","JUNTA DE DESMONTAJE","LINEA DE IMPULSION","MAQUINARIA","MOBILIARIO","MOTOR","OBRA","OBRA CIVIL PARA REDES","RED DE AGUA POTABLE","REDES DE ALCANTARILLADO","REJILLA","SIFON","SUSTITUCION DE REDES","TABLERO DE CONTROL","TERRENO","TUBERIAS DISTRIBUCION PRINCIPAL","TUBO","VALVULAS","VARIAS OBRAS MENORES","VEHICULO"];
-
-// ── App State ────────────────────────────────────────────────
-let assets = [];         // local cache
-let cortes = [];
-let filteredAssets = [];
-let currentPage = 1;
-const PAGE_SIZE = 30;
-let currentFilter = 'all';
-let currentEditId = null;
-let editPhotos = [null, null, null];
-let editCoords = null;
-let photoSlotIdx = 0;
-let scannerStream = null;
-let unsubAssets = null;
-let lastSync = null;
-let pendingLocal = {}; // offline queue
-
-// ── Expose globals for HTML onclick ─────────────────────────
-window.showView = showView;
-window.setFilter = setFilter;
-window.handleSearch = handleSearch;
-window.openScanner = openScanner;
-window.closeScanner = closeScanner;
-window.searchCode = searchCode;
-window.openNewAsset = openNewAsset;
-window.openAsset = openAsset;
-window.closeForm = closeForm;
-window.handleOverlayClick = handleOverlayClick;
-window.setStatus = setStatus;
-window.getLocation = getLocation;
-window.triggerPhoto = triggerPhoto;
-window.handlePhoto = handlePhoto;
-window.removePhoto = removePhoto;
-window.openLightbox = openLightbox;
-window.closeLightbox = closeLightbox;
-window.saveAsset = saveAsset;
-window.deleteAsset = deleteAsset;
-window.changePage = changePage;
-window.createCorte = createCorte;
-window.exportCSV = exportCSV;
-window.exportJSON = exportJSON;
-window.handleImport = handleImport;
-window.forceSyncNow = forceSyncNow;
-
-// ── INIT ─────────────────────────────────────────────────────
-async function init() {
-  setLoadingMsg("Preparando interfaz...");
-  populateDropdowns();
-  renderPhotoGrid();
-  loadLocalCortes();
-
-  setLoadingMsg("Conectando a Firestore...");
-  try {
-    await startRealtimeSync();
-    setFbStatus(true);
-  } catch(e) {
-    console.warn("Firebase offline, using local cache", e);
-    loadFromLocalStorage();
-    setFbStatus(false);
-  }
-
-  updateOnlineStatus();
-  window.addEventListener('online', () => { updateOnlineStatus(); forceSyncNow(); });
-  window.addEventListener('offline', updateOnlineStatus);
-
-  document.getElementById('loadingOverlay').classList.add('hidden');
-  showView('dashboard');
-}
-
-function setLoadingMsg(m){ document.getElementById('loadingMsg').textContent = m; }
-
-// ── FIREBASE REALTIME SYNC ───────────────────────────────────
-function startRealtimeSync() {
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error("timeout")), 8000);
-    const col = collection(db, "assets");
-    unsubAssets = onSnapshot(col, (snap) => {
-      clearTimeout(timeout);
-      assets = [];
-      snap.forEach(d => assets.push({ id: d.id, ...d.data() }));
-      lastSync = new Date();
-      document.getElementById('stLastSync').textContent = lastSync.toLocaleString('es-EC');
-      renderDashboard();
-      renderList();
-      updateSettings();
-      updateExportCounts();
-      setFbStatus(true);
-      resolve();
-    }, (err) => {
-      clearTimeout(timeout);
-      console.error("Firestore error:", err);
-      setFbStatus(false);
-      reject(err);
-    });
-  });
-}
-
-function setFbStatus(online) {
-  const badge = document.getElementById('syncBadge');
-  const dot = document.getElementById('fbDot');
-  const status = document.getElementById('fbStatus');
-  if(online) {
-    badge.textContent = '● EN LÍNEA';
-    badge.className = 'sync-badge online';
-    if(dot) dot.innerHTML = '<span class="cloud-dot ok"></span>';
-    if(status) status.textContent = 'Conectado a Firebase · Sync en tiempo real';
-  } else {
-    badge.textContent = '● OFFLINE';
-    badge.className = 'sync-badge offline';
-    if(dot) dot.innerHTML = '<span class="cloud-dot err"></span>';
-    if(status) status.textContent = 'Sin conexión — cambios guardados localmente';
-  }
-}
-
-function setSyncing() {
-  const badge = document.getElementById('syncBadge');
-  badge.textContent = '⟳ SINCRONIZANDO';
-  badge.className = 'sync-badge syncing';
-}
-
-async function forceSyncNow() {
-  if(!navigator.onLine){ showToast('📵 Sin conexión a internet'); return; }
-  setSyncing();
-  showToast('🔄 Sincronizando...');
-  // flush pending local writes
-  const keys = Object.keys(pendingLocal);
-  if(keys.length > 0) {
-    try {
-      const batch = writeBatch(db);
-      keys.forEach(k => {
-        const d = pendingLocal[k];
-        const ref2 = doc(db, "assets", k);
-        batch.set(ref2, d);
-      });
-      await batch.commit();
-      pendingLocal = {};
-      saveLocalStorage();
-      showToast(`✅ ${keys.length} cambios subidos`);
-    } catch(e) { showToast('❌ Error al sincronizar: ' + e.message); }
-  } else {
-    showToast('✅ Todo sincronizado');
-  }
-  setFbStatus(navigator.onLine);
-}
-
-// ── LOCAL STORAGE (offline fallback) ────────────────────────
-function saveLocalStorage() {
-  try {
-    localStorage.setItem('ema_assets', JSON.stringify(assets));
-    localStorage.setItem('ema_cortes', JSON.stringify(cortes));
-    localStorage.setItem('ema_pending', JSON.stringify(pendingLocal));
-  } catch(e) { console.warn('localStorage full'); }
-}
-function loadFromLocalStorage() {
-  try {
-    const a = localStorage.getItem('ema_assets');
-    if(a) assets = JSON.parse(a);
-    const p = localStorage.getItem('ema_pending');
-    if(p) pendingLocal = JSON.parse(p);
-  } catch(e){}
-  renderDashboard(); renderList(); updateSettings();
-}
-function loadLocalCortes() {
-  try {
-    const c = localStorage.getItem('ema_cortes');
-    if(c) cortes = JSON.parse(c);
-  } catch(e){}
-}
-
-function updateOnlineStatus() {
-  if(!navigator.onLine) setFbStatus(false);
-}
-
-// ── SAVE ASSET TO FIRESTORE ──────────────────────────────────
-async function writeAsset(assetData) {
-  const id = assetData.codigoEmapag;
-  const payload = { ...assetData, updatedAt: new Date().toISOString() };
-  delete payload.id;
-  if(navigator.onLine) {
-    try {
-      await setDoc(doc(db, "assets", id), payload);
-    } catch(e) {
-      // queue for later
-      pendingLocal[id] = payload;
-      saveLocalStorage();
-      throw e;
+// Inicializar Firebase si la config no está por defecto
+let db;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  // Habilitar persistencia de datos offline de forma segura
+  db.enablePersistence().catch((err) => {
+    if (err.code == 'failed-precondition') {
+      console.warn('Persistencia falló: múltiples pestañas abiertas.');
+    } else if (err.code == 'unimplemented') {
+      console.warn('El navegador no soporta persistencia offline.');
     }
-  } else {
-    // offline: save locally and queue
-    const idx = assets.findIndex(a => a.codigoEmapag === id);
-    if(idx >= 0) assets[idx] = { id, ...payload };
-    else assets.push({ id, ...payload });
-    pendingLocal[id] = payload;
-    saveLocalStorage();
-    renderDashboard(); renderList(); updateSettings();
-  }
+  });
+} catch (e) {
+  console.error("Error inicializando Firebase:", e);
 }
 
-async function removeAssetFromFirestore(code) {
-  if(navigator.onLine) {
-    await deleteDoc(doc(db, "assets", code));
-  } else {
-    assets = assets.filter(a => a.codigoEmapag !== code);
-    saveLocalStorage();
-    renderDashboard(); renderList();
-  }
-}
-
-// ── UPLOAD PHOTO TO STORAGE ──────────────────────────────────
-async function uploadPhoto(base64, code, idx) {
-  if(!base64 || !base64.startsWith('data:')) return base64;
-  if(!navigator.onLine) return base64; // keep as base64 locally
-  try {
-    const storageRef = ref(storage, `assets/${code}/foto_${idx}.jpg`);
-    await uploadString(storageRef, base64, 'data_url');
-    const url = await getDownloadURL(storageRef);
-    return url;
-  } catch(e) {
-    console.warn('Photo upload failed', e);
-    return base64; // fallback: store base64 locally
-  }
-}
-
-// ── NAVIGATION ───────────────────────────────────────────────
-function showView(view) {
+// --- CONTROL DE VISTAS ---
+function showView(viewId) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('view-' + view).classList.add('active');
-  document.getElementById('nav-' + view)?.classList.add('active');
-  document.getElementById('fabBtn').style.display = view === 'inventory' ? 'flex' : 'none';
-  if(view === 'dashboard') renderDashboard();
-  if(view === 'inventory') renderList();
-  if(view === 'export') { updateExportInfo(); updateExportCounts(); }
-  if(view === 'settings') updateSettings();
+  
+  const targetView = document.getElementById(`view-${viewId}`);
+  const targetNav = document.getElementById(`nav-${viewId}`);
+  if(targetView) targetView.classList.add('active');
+  if(targetNav) targetNav.classList.add('active');
+  
+  const fab = document.getElementById('fabBtn');
+  if(fab) fab.style.display = (viewId === 'inventory') ? 'flex' : 'none';
 }
 
-// ── DASHBOARD ────────────────────────────────────────────────
-function renderDashboard() {
-  const total = assets.length;
-  const verified = assets.filter(a => a.inventarioFisico === 'VERIFICADO').length;
-  const unverified = total - verified;
-  const pct = total > 0 ? ((verified/total)*100).toFixed(1) : 0;
-
-  document.getElementById('statTotal').textContent = total.toLocaleString('es-EC');
-  document.getElementById('statVerified').textContent = verified.toLocaleString('es-EC');
-  document.getElementById('statUnverified').textContent = unverified.toLocaleString('es-EC');
-  document.getElementById('statPct').textContent = pct + '%';
-  document.getElementById('progressBar').style.width = pct + '%';
-  document.getElementById('pctLabel').textContent = pct + '%';
-  document.getElementById('dashDate').textContent = '🕐 ' + new Date().toLocaleString('es-EC');
-
-  // by tipo
-  const byTipo = {};
-  assets.forEach(a => { const k = a.tipo || 'Sin tipo'; byTipo[k] = (byTipo[k]||0)+1; });
-  const ts = Object.entries(byTipo).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const maxT = ts[0]?.[1]||1;
-  document.getElementById('typeChart').innerHTML = ts.map(([k,v]) =>
-    `<div class="bar-row"><div class="bar-label" title="${k}">${k.length>22?k.slice(0,22)+'…':k}</div><div class="bar-track"><div class="bar-fill" style="width:${(v/maxT*100).toFixed(1)}%"></div></div><div class="bar-count">${v}</div></div>`
-  ).join('') || '<div style="color:var(--g400);font-size:13px">Sin datos</div>';
-
-  // by sede
-  const bySede = {};
-  assets.forEach(a => { const k = a.sedeNom||'Sin sede'; bySede[k]=(bySede[k]||0)+1; });
-  const ss = Object.entries(bySede).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  const maxS = ss[0]?.[1]||1;
-  document.getElementById('sedeChart').innerHTML = ss.map(([k,v]) =>
-    `<div class="bar-row"><div class="bar-label" title="${k}">${k.length>22?k.slice(0,22)+'…':k}</div><div class="bar-track"><div class="bar-fill" style="width:${(v/maxS*100).toFixed(1)}%;background:linear-gradient(90deg,var(--teal),#4db6ac)"></div></div><div class="bar-count">${v}</div></div>`
-  ).join('') || '<div style="color:var(--g400);font-size:13px">Sin datos</div>';
-
-  // cortes
-  if(cortes.length === 0) {
-    document.getElementById('cortesSummary').innerHTML = '<span style="color:var(--g400)">No hay cortes aún. Crea uno en la pestaña Exportar.</span>';
-  } else {
-    document.getElementById('cortesSummary').innerHTML = cortes.slice().reverse().map(c =>
-      `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--g100)"><div><strong style="font-size:13px">Corte #${c.num}</strong><span style="font-size:12px;color:var(--g500);margin-left:8px">${new Date(c.fecha).toLocaleDateString('es-EC')}</span></div><span style="font-size:12px;font-family:var(--mono);color:var(--green)">✅ ${c.verificados}/${c.total}</span></div>`
-    ).join('');
-  }
-}
-
-// ── INVENTORY LIST ───────────────────────────────────────────
-function handleSearch() { currentPage = 1; renderList(); }
-
-function setFilter(f, el) {
-  currentFilter = f; currentPage = 1;
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderList();
-}
-
-function renderList() {
-  const q = (document.getElementById('searchInput').value||'').toLowerCase().trim();
-  filteredAssets = assets.filter(a => {
-    const mf = currentFilter==='all' ? true : currentFilter==='verified' ? a.inventarioFisico==='VERIFICADO' : currentFilter==='unverified' ? a.inventarioFisico==='NO VERIFICADO' : currentFilter==='new' ? a.isNew : currentFilter==='photos' ? (a.fotos&&a.fotos.length>0) : true;
-    if(!mf) return false;
-    if(!q) return true;
-    return ['codigoEmapag','codigoConcesionaria','descripcion','clase','tipo','sedeNom','marca','modelo','serie'].some(k => (a[k]||'').toLowerCase().includes(q));
-  });
-
-  const total = filteredAssets.length;
-  const start = (currentPage-1)*PAGE_SIZE;
-  const items = filteredAssets.slice(start, start+PAGE_SIZE);
-  const list = document.getElementById('invList');
-  const estMap = {'1':'BUENO','2':'REGULAR','3':'MALO'};
-
-  if(items.length === 0) {
-    list.innerHTML = `<div class="empty-state"><div class="emoji">🔍</div><p style="font-size:15px;font-weight:500">${assets.length===0?'Sin activos cargados':'Sin resultados'}</p><small style="margin-top:4px;display:block">${assets.length===0?'Importa datos o agrega activos con ＋':'Intenta con otro término'}</small></div>`;
-  } else {
-    list.innerHTML = items.map(a => {
-      const v = a.inventarioFisico==='VERIFICADO';
-      return `<div class="asset-card" onclick="openAsset('${a.codigoEmapag}')">
-        <div class="asset-card-inner">
-          <div class="asset-status-bar ${v?'verified':'unverified'}"></div>
-          <div class="asset-body">
-            <div class="asset-top">
-              <span class="asset-code">${a.codigoEmapag||'—'}</span>
-              <span class="asset-status-badge ${v?'badge-v':'badge-nv'}">${v?'✅ OK':'⚠️ PEND.'}</span>
-            </div>
-            <div class="asset-name">${a.descripcion||a.clase||'Sin descripción'}</div>
-            <div class="asset-meta">
-              ${a.clase?`<span class="asset-tag">🏷️ ${a.clase}</span>`:''}
-              ${a.sedeNom?`<span class="asset-tag">📍 ${a.sedeNom.length>22?a.sedeNom.slice(0,22)+'…':a.sedeNom}</span>`:''}
-              ${a.estado?`<span class="asset-tag">🔵 ${estMap[a.estado]||''}</span>`:''}
-              ${a.isNew?`<span class="new-badge">NUEVO</span>`:''}
-              ${a.fotos&&a.fotos.length>0?`<span class="asset-tag">📷 ${a.fotos.length}</span>`:''}
-              ${a.coords?`<span class="asset-tag">📍 GPS</span>`:''}
-            </div>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  const totalPages = Math.ceil(total/PAGE_SIZE);
-  const pag = document.getElementById('pagination');
-  pag.innerHTML = totalPages <= 1
-    ? `<span class="page-info">${total} bienes</span>`
-    : `<button class="page-btn" onclick="changePage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹ Ant</button><span class="page-info">Pág ${currentPage}/${totalPages} · ${total}</span><button class="page-btn" onclick="changePage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>Sig ›</button>`;
-}
-
-function changePage(p) { currentPage=p; renderList(); document.querySelector('.inv-header').scrollIntoView({behavior:'smooth'}); }
-
-// ── DROPDOWN POPULATION ──────────────────────────────────────
-function populateDropdowns() {
-  document.getElementById('fSede').innerHTML = '<option value="">— Sin sede —</option>' + SEDES.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-  document.getElementById('fTipo').innerHTML = '<option value="">— Tipo —</option>' + TIPOS.map(t=>`<option value="${t}">${t}</option>`).join('');
-  document.getElementById('fClase').innerHTML = '<option value="">— Clase —</option>' + CLASES.map(c=>`<option value="${c}">${c}</option>`).join('');
-}
-
-// ── ASSET FORM ───────────────────────────────────────────────
-function openAsset(code) {
-  const a = assets.find(x => x.codigoEmapag === code);
-  if(!a) { showToast('Activo no encontrado'); return; }
-  currentEditId = code;
-  editPhotos = [...(a.fotos||[])]; while(editPhotos.length<3) editPhotos.push(null);
-  editCoords = a.coords||null;
-  fillForm(a);
-  document.getElementById('formTitle').textContent = `Activo: ${code}`;
-  document.getElementById('btnDel').style.display = 'flex';
-  openForm();
-}
-
+// --- MANEJO DEL FORMULARIO OVERLAY ---
 function openNewAsset() {
-  currentEditId = null; editPhotos=[null,null,null]; editCoords=null;
-  clearForm();
-  document.getElementById('formTitle').textContent = 'Nuevo Activo';
-  document.getElementById('btnDel').style.display = 'none';
-  openForm();
-}
-
-function fillForm(a) {
-  const vals = {fCodigo:a.codigoEmapag,fCodConces:a.codigoConcesionaria,fDesc:a.descripcion,fMarca:a.marca,fModelo:a.modelo,fSerie:a.serie,fAnio:a.año,fCosto:a.costo||'',fObs:a.observacion,fMotor:a.motor,fChasis:a.chasis,fPlaca:a.placa,fAfectacion:a.afectacion,fUbic:a.ubicacion};
-  Object.entries(vals).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.value=v||''; });
-  document.getElementById('fSede').value = a.sede||'';
-  document.getElementById('fTipo').value = a.tipo||'';
-  document.getElementById('fClase').value = a.clase||'';
-  document.getElementById('fEstado').value = a.estado||'';
-  document.getElementById('fFechaC').value = a.fechaCompra?a.fechaCompra.slice(0,10):'';
-  document.getElementById('fFechaI').value = a.fechaInventario?a.fechaInventario.slice(0,10):'';
-  setStatus(a.inventarioFisico||'NO VERIFICADO');
-  document.getElementById('locText').textContent = a.coords ? `📍 ${a.coords.lat.toFixed(6)}, ${a.coords.lng.toFixed(6)}` : 'Sin coordenadas';
-  renderPhotoGrid();
-}
-
-function clearForm() {
-  ['fCodigo','fCodConces','fDesc','fMarca','fModelo','fSerie','fAnio','fCosto','fObs','fMotor','fChasis','fPlaca','fAfectacion','fUbic'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-  ['fSede','fTipo','fClase','fEstado'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('fFechaI').value = new Date().toISOString().slice(0,10);
-  document.getElementById('fFechaC').value = '';
+  document.getElementById('formTitle').innerText = "Nuevo Activo";
+  document.getElementById('fCodigo').value = "";
+  document.getElementById('fCodConces').value = "";
+  document.getElementById('fDesc').value = "";
+  document.getElementById('fMarca').value = "";
+  document.getElementById('fModelo').value = "";
+  document.getElementById('fSerie').value = "";
+  document.getElementById('fSede').value = "";
+  document.getElementById('gpsDisplay').innerText = "Sin coordenadas";
   setStatus('NO VERIFICADO');
-  document.getElementById('locText').textContent = 'Sin coordenadas';
-  renderPhotoGrid();
+  
+  document.getElementById('formOverlay').classList.add('open');
 }
 
-function setStatus(s) {
-  document.getElementById('btnV').classList.toggle('sel', s==='VERIFICADO');
-  document.getElementById('btnNV').classList.toggle('sel', s==='NO VERIFICADO');
+function closeForm() {
+  document.getElementById('formOverlay').classList.remove('open');
 }
-function getStatus() { return document.getElementById('btnV').classList.contains('sel') ? 'VERIFICADO' : 'NO VERIFICADO'; }
 
-function openForm() { document.getElementById('formOverlay').classList.add('open'); document.body.style.overflow='hidden'; }
-function closeForm() { document.getElementById('formOverlay').classList.remove('open'); document.body.style.overflow=''; }
-function handleOverlayClick(e) { if(e.target===document.getElementById('formOverlay')) closeForm(); }
+function handleOverlayClick(e) {
+  if(e.target.id === 'formOverlay') closeForm();
+}
 
-async function saveAsset() {
-  const code = document.getElementById('fCodigo').value.trim();
-  if(!code){ showToast('⚠️ El código Emapag es obligatorio'); return; }
-  const saveBtn = document.getElementById('btnSave');
-  saveBtn.disabled = true; saveBtn.textContent = '⏳ Guardando...';
-  try {
-    const sedeId = parseInt(document.getElementById('fSede').value)||null;
-    const sedeObj = SEDES.find(s=>s.id===sedeId);
+function setStatus(status) {
+  const btnV = document.getElementById('btnV');
+  const btnNV = document.getElementById('btnNV');
+  if(status === 'VERIFICADO') {
+    btnV.classList.add('sel');
+    btnNV.classList.remove('sel');
+  } else {
+    btnNV.classList.add('sel');
+    btnV.classList.remove('sel');
+  }
+}
 
-    // Upload photos to Storage (if base64)
-    const uploadedPhotos = [];
-    for(let i=0;i<editPhotos.length;i++) {
-      if(editPhotos[i]) {
-        const url = await uploadPhoto(editPhotos[i], code, i);
-        uploadedPhotos.push(url);
-      }
+// --- FUNCIONES MOCK / INTERFAZ BASE ---
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.innerText = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function forceSyncNow() {
+  showToast("Sincronizando con Firestore...");
+}
+
+// Quitar pantalla de carga inicial al montar el documento
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    const loader = document.getElementById('loadingOverlay');
+    if(loader) loader.classList.add('hidden');
+    
+    // Configurar estado inicial de red
+    const badge = document.getElementById('syncBadge');
+    if(navigator.onLine) {
+      badge.innerText = "● ONLINE";
+      badge.className = "sync-badge online";
     }
+    
+    // Cargar fecha actual en el dashboard
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('dashDate').innerText = new Date().toLocaleDateString('es-ES', options);
+  }, 1000);
+});
 
-    const existing = assets.find(a=>a.codigoEmapag===code);
-    const payload = {
-      codigoEmapag: code,
-      codigoConcesionaria: document.getElementById('fCodConces').value.trim(),
-      tipo: document.getElementById('fTipo').value,
-      clase: document.getElementById('fClase').value,
-      descripcion: document.getElementById('fDesc').value.trim(),
-      marca: document.getElementById('fMarca').value.trim(),
-      modelo: document.getElementById('fModelo').value.trim(),
-      serie: document.getElementById('fSerie').value.trim(),
-      costo: parseFloat(document.getElementById('fCosto').value)||0,
-      año: document.getElementById('fAnio').value.trim(),
-      observacion: document.getElementById('fObs').value.trim(),
-      motor: document.getElementById('fMotor').value.trim(),
-      chasis: document.getElementById('fChasis').value.trim(),
-      placa: document.getElementById('fPlaca').value.trim(),
-      afectacion: document.getElementById('fAfectacion').value.trim(),
-      ubicacion: document.getElementById('fUbic').value.trim(),
-      sede: sedeId,
-      sedeNom: sedeObj ? sedeObj.name : '',
-      estado: document.getElementById('fEstado').value,
-      inventarioFisico: getStatus(),
-      fechaInventario: document.getElementById('fFechaI').value || new Date().toISOString().slice(0,10),
-      fechaCompra: document.getElementById('fFechaC').value,
-      fotos: uploadedPhotos,
-      coords: editCoords,
-      isNew: existing ? (existing.isNew||false) : true,
-    };
-
-    await writeAsset(payload);
-    closeForm();
-    showToast('✅ Activo guardado y sincronizado');
-  } catch(e) {
-    showToast('⚠️ Guardado localmente (sin conexión)');
-    closeForm();
-  } finally {
-    saveBtn.disabled = false; saveBtn.textContent = '💾 Guardar';
-  }
-}
-
-async function deleteAsset() {
-  if(!confirm(`¿Eliminar el activo ${currentEditId}? Esta acción es irreversible.`)) return;
-  try {
-    await removeAssetFromFirestore(currentEditId);
-    closeForm();
-    showToast('🗑️ Activo eliminado');
-  } catch(e) { showToast('❌ Error al eliminar: ' + e.message); }
-}
-
-// ── PHOTOS ───────────────────────────────────────────────────
-function triggerPhoto(idx) { photoSlotIdx=idx; document.getElementById('photoInput').value=''; document.getElementById('photoInput').click(); }
-
-function handlePhoto(e) {
-  const file = e.target.files[0]; if(!file) return;
-  // Compress before storing
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const MAX = 1200;
-      let w=img.width, h=img.height;
-      if(w>MAX){ h=h*(MAX/w); w=MAX; }
-      if(h>MAX){ w=w*(MAX/h); h=MAX; }
-      canvas.width=w; canvas.height=h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
-      editPhotos[photoSlotIdx] = canvas.toDataURL('image/jpeg', 0.82);
-      renderPhotoGrid();
-    };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-function removePhoto(idx) { editPhotos[idx]=null; renderPhotoGrid(); }
-
-function renderPhotoGrid() {
-  document.getElementById('photoGrid').innerHTML = editPhotos.map((p,i) =>
-    p ? `<div class="photo-slot"><img src="${p}" onclick="openLightbox(${i})"><button class="rm-photo" onclick="removePhoto(${i})">✕</button></div>`
-      : `<div class="photo-slot" onclick="triggerPhoto(${i})"><span class="add-icon">📷</span></div>`
-  ).join('');
-}
-
-function openLightbox(idx) {
-  const src = editPhotos[idx]; if(!src) return;
-  document.getElementById('lbImg').src = src;
-  document.getElementById('lightbox').classList.add('open');
-}
-function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
-
-// ── GPS ──────────────────────────────────────────────────────
-function getLocation() {
-  if(!navigator.geolocation){ showToast('GPS no disponible'); return; }
-  showToast('📍 Obteniendo ubicación...');
-  navigator.geolocation.getCurrentPosition(pos => {
-    editCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy };
-    document.getElementById('locText').textContent = `📍 ${editCoords.lat.toFixed(6)}, ${editCoords.lng.toFixed(6)} (±${editCoords.acc.toFixed(0)}m)`;
-    showToast('📍 Ubicación capturada');
-  }, err => showToast('❌ GPS: ' + err.message), {enableHighAccuracy:true,timeout:10000});
-
-// ── SCANNER ──────────────────────────────────────────────────
-function openScanner() {
-  document.getElementById('scannerOverlay').classList.add('open');
-  if(navigator.mediaDevices?.getUserMedia) {
-    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
-      .then(stream => { scannerStream=stream; document.getElementById('scanner-video').srcObject=stream; })
-      .catch(() => showToast('📷 Cámara no disponible — usa código manual'));
-  }
-}
-function closeScanner() {
-  document.getElementById('scannerOverlay').classList.remove('open');
-  if(scannerStream){ scannerStream.getTracks().forEach(t=>t.stop()); scannerStream=null; }
-}
-function searchCode() {
-  const code = document.getElementById('manualCode').value.trim(); if(!code) return;
-  const a = assets.find(x => x.codigoEmapag?.toLowerCase()===code.toLowerCase() || x.codigoConcesionaria?.toLowerCase()===code.toLowerCase());
-  closeScanner();
-  if(a) openAsset(a.codigoEmapag);
-  else showToast(`⚠️ "${code}" no encontrado`);
-}
-document.getElementById('manualCode').addEventListener('keydown', e=>{ if(e.key==='Enter') searchCode(); });
-document.getElementById('searchInput').addEventListener('keydown', e=>{ if(e.key==='Escape'){ document.getElementById('searchInput').value=''; renderList(); } });
-init();
-</script></body></html>
+// Escuchar cambios de conectividad
+window.addEventListener('online', () => {
+  const badge = document.getElementById('syncBadge');
+  badge.innerText = "● ONLINE";
+  badge.className = "sync-badge online";
+  showToast("Conexión restablecida.");
+});
+window.addEventListener('offline', () => {
+  const badge = document.getElementById('syncBadge');
+  badge.innerText = "● OFFLINE";
+  badge.className = "sync-badge offline";
+  showToast("Trabajando en modo offline.");
+});
+</script>
+</body>
+</html>
