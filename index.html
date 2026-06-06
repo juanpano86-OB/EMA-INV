@@ -489,6 +489,9 @@ const firebaseConfig = {
   measurementId: "G-H21PLGFY1V"
 };
 
+// Inicializar Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
 const storage = getStorage(fbApp);
